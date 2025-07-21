@@ -19,6 +19,7 @@
 #include "projecttree.h"
 #include "projectview.h"
 #include "propertyview.h"
+#include "loglistview.h"
 #include "windowid.h"
 
 namespace bus {
@@ -26,8 +27,6 @@ namespace bus {
 wxIMPLEMENT_DYNAMIC_CLASS(ProjectFrame,wxPanel)
 
 wxBEGIN_EVENT_TABLE(ProjectFrame, wxPanel)
-
-
 wxEND_EVENT_TABLE()
 
 ProjectFrame::ProjectFrame(wxDocParentFrame *parent)
@@ -36,6 +35,9 @@ ProjectFrame::ProjectFrame(wxDocParentFrame *parent)
   splitter_ = new wxSplitterWindow(this, wxID_ANY,
     wxDefaultPosition, wxDefaultSize,
     wxSP_3D | wxCLIP_CHILDREN);
+  log_view_ = new LogListView(this);
+  log_view_->SetMinSize(wxSize(400, 100));
+
   project_panel_ = new ProjectTree(splitter_);
   property_view_ = new PropertyView(splitter_);
 
@@ -50,8 +52,10 @@ ProjectFrame::ProjectFrame(wxDocParentFrame *parent)
 
   auto* main_sizer = new wxBoxSizer(wxVERTICAL);
   main_sizer->Add(splitter_, 1, wxEXPAND | wxLEFT | wxBOTTOM, 0);
-
+  main_sizer->Add(log_view_, 0,
+     wxLEFT | wxRIGHT | wxEXPAND , 0);
   SetSizerAndFit(main_sizer);
+  log_view_->Update();
 }
 
 void ProjectFrame::Update() {
@@ -60,6 +64,8 @@ void ProjectFrame::Update() {
   }
   RedrawLeft();
   RedrawRight();
+  log_view_->Update();
+  wxPanel::Update();
 }
 
 ProjectDocument *ProjectFrame::GetDocument() const {
@@ -120,6 +126,22 @@ void ProjectFrame::SetView(ProjectView *view) {
   }
   if (database_view_ != nullptr) {
     database_view_->SetView(view);
+  }
+}
+
+void ProjectFrame::CheckLogView() {
+  if (log_view_ != nullptr) {
+    log_view_->CheckLogView();
+  }
+}
+
+bool ProjectFrame::IsLogViewVisible() const {
+  return log_view_ != nullptr && log_view_->IsShown();
+}
+
+void ProjectFrame::ShowLogView(bool show) {
+  if (log_view_ != nullptr) {
+    log_view_->Show(show);
   }
 }
 

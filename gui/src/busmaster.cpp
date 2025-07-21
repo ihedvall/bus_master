@@ -6,6 +6,9 @@
 
 #include <util/logconfig.h>
 #include <util/logstream.h>
+
+#include <bus/buslogstream.h>
+
 #include <wx/config.h>
 #include <wx/docview.h>
 #include <wx/utils.h>
@@ -27,6 +30,19 @@
 using namespace util::log;
 
 wxIMPLEMENT_APP(bus::BusMaster);
+
+namespace {
+  void BusLogFunction(const std::source_location& location,
+                   bus::BusLogSeverity severity,
+                   const std::string& message) {
+    util::log::LogMessage msg;
+    msg.message = message;
+    msg.severity = static_cast<util::log::LogSeverity>(severity);
+    msg.location = location;
+    util::log::LogConfig::Instance().AddLogMessage(msg);
+  }
+
+}
 
 namespace bus {
 
@@ -57,6 +73,14 @@ bool BusMaster::OnInit() {
   log_config.SubDir("bus_master/log");
   log_config.BaseName("bus_master");
   log_config.CreateDefaultLogger();
+
+  // Add the log to list logger
+  const std::vector<std::string> empty_args;
+  log_config.AddLogger("ListLogger", LogType::LogToList,empty_args);
+
+  // Redirect bus message log to this log system.
+  BusLogStream::UserLogFunction = BusLogFunction;
+
   LOG_INFO() << "Log File created. Path: " << log_config.GetLogFile();
 
   notepad_ = util::log::FindNotepad();
@@ -95,6 +119,9 @@ int BusMaster::OnExit() {
     delete doc_manager;
   }
   LOG_INFO() << "Saved file history.";
+
+  // Reset bus message log.
+  BusLogStream::UserLogFunction = BusLogStream::BusNoLogFunction;
 
   auto& log_config = LogConfig::Instance();
   log_config.DeleteLogChain();

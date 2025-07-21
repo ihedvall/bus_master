@@ -50,18 +50,21 @@ class ProjectDocument : public wxDocument {
   void OnUpdateProjectExist(wxUpdateUIEvent& event);
 
   void OnUpdateEnvironmentSelected(wxUpdateUIEvent& event);
+  void OnUpdateEnableEnvironment(wxUpdateUIEvent& event);
+  void OnUpdateDisableEnvironment(wxUpdateUIEvent& event);
   void OnUpdateStartEnvironment(wxUpdateUIEvent& event);
   void OnUpdateStopEnvironment(wxUpdateUIEvent& event);
-
   void OnUpdateDatabaseSelected(wxUpdateUIEvent& event);
   void OnUpdateActivateDatabase(wxUpdateUIEvent& event);
   void OnUpdateDeactivateDatabase(wxUpdateUIEvent& event);
 
   void OnEditProject(wxCommandEvent& event);
 
-  void OnAddEnvironment(wxCommandEvent& event);
+  void OnAddBrokerEnvironment(wxCommandEvent& event);
   void OnEditEnvironment(wxCommandEvent& event);
   void OnDeleteEnvironment(wxCommandEvent& event);
+  void OnEnableEnvironment(wxCommandEvent& event);
+  void OnDisableEnvironment(wxCommandEvent& event);
   void OnStartEnvironment(wxCommandEvent& event);
   void OnStopEnvironment(wxCommandEvent& event);
 

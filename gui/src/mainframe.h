@@ -38,6 +38,11 @@ class MainFrame : public wxDocParentFrame {
   void OnUpdateNoDocument(wxUpdateUIEvent& event);
   void OnTimer(wxTimerEvent& event);
 
+  void OnUpdateHideLogView(wxUpdateUIEvent& event);
+  void OnHideLogView(wxCommandEvent& event);
+  void OnUpdateShowLogView(wxUpdateUIEvent& event);
+  void OnShowLogView(wxCommandEvent& event);
+  void OnAddLogMessage(wxCommandEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 

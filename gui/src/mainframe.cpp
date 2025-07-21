@@ -14,6 +14,8 @@
 #include <array>
 #include <string>
 
+#include "environmentdialog.h"
+#include "addlogmessagedialog.h"
 #include "projectdocument.h"
 #include "projectframe.h"
 #include "windowid.h"
@@ -30,6 +32,12 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxDocParentFrame)
   EVT_CLOSE(MainFrame::OnClose)
   EVT_DROP_FILES(MainFrame::OnDropFiles)
   EVT_TIMER(kIdTimer, MainFrame::OnTimer)
+
+  EVT_UPDATE_UI(kIdHideLogView, MainFrame::OnUpdateHideLogView)
+  EVT_MENU(kIdHideLogView, MainFrame::OnHideLogView)
+  EVT_UPDATE_UI(kIdShowLogView, MainFrame::OnUpdateShowLogView)
+  EVT_MENU(kIdShowLogView, MainFrame::OnShowLogView)
+  EVT_MENU(kIdAddLogMessage, MainFrame::OnAddLogMessage)
 
   EVT_UPDATE_UI(kIdEditProject, MainFrame::OnUpdateNoDocument)
   EVT_UPDATE_UI_RANGE(kIdAddEnvironment,kIdDeleteDestination,
@@ -73,16 +81,22 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   doc_manager->FileHistoryLoad(*app_config);
 
   // ENVIRONMENTS
+  auto* menu_add_env = new wxMenu;
+  menu_add_env->Append(kIdAddBrokerEnvironment, "Broker Environment",
+                            "Add broker environment.");
+
   auto* menu_env = new wxMenu;
-  menu_env->Append(kIdAddEnvironment, wxGetStockLabel(wxID_ADD),
+  menu_env->Append(kIdAddEnvironment, wxGetStockLabel(wxID_ADD), menu_add_env,
                    "Add an environment");
   menu_env->Append(kIdEditEnvironment, wxGetStockLabel(wxID_EDIT),
                    "Change an environment");
   menu_env->Append(kIdDeleteEnvironment, wxGetStockLabel(wxID_DELETE),
                    "Delete an environment");
   menu_env->AppendSeparator();
-  menu_env->Append(kIdStartEnvironment, "Start","Starts the environment");
-  menu_env->Append(kIdStopEnvironment, "Stop","Stops the environment");
+  menu_env->Append(kIdEnableEnvironment, "Enable","Enable the environment.");
+  menu_env->Append(kIdDisableEnvironment, "Disable","Disable the environment.");
+  menu_env->Append(kIdStartEnvironment, "Start","Starts the environment.");
+  menu_env->Append(kIdStopEnvironment, "Stop","Stops the environment.");
 
   // DATABASES
   auto* menu_db = new wxMenu;
@@ -128,8 +142,15 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   // ABOUT
   auto* menu_about = new wxMenu;
   menu_about->Append(kIdOpenLogFile, "Open Log File");
-  menu_about->Append(wxID_HELP);
   menu_about->AppendSeparator();
+  menu_about->Append(kIdHideLogView, "Hide Log Window",
+                     "Hide the internal log window");
+  menu_about->Append(kIdShowLogView, "Show Log Window",
+                     "Show the internal log window");
+  menu_about->Append(kIdAddLogMessage, "Add Log Message",
+                     "Add a log message to the log system.");
+  menu_about->AppendSeparator();
+  menu_about->Append(wxID_HELP);
   menu_about->Append(wxID_ABOUT, wxGetStockLabel(wxID_ABOUT));
 
   auto* menu_bar = new wxMenuBar;
@@ -274,7 +295,10 @@ void MainFrame::OnUpdateNoDocument(wxUpdateUIEvent& event) {
 }
 
 void MainFrame::OnTimer(wxTimerEvent& event) {
-  // Update the timers
+  // Update the logger  window
+  if (project_frame_ != nullptr) {
+    project_frame_->CheckLogView();
+  }
 
   if (status_bar_ != nullptr) {
     const wxString date_time = GetLocalDateTime();
@@ -285,6 +309,40 @@ void MainFrame::OnTimer(wxTimerEvent& event) {
   }
 
   // ToDo: Update the status pane
+}
+
+void MainFrame::OnUpdateHideLogView(wxUpdateUIEvent& event) {
+  if (project_frame_ != nullptr) {
+    event.Enable(project_frame_->IsLogViewVisible());
+  } else {
+    event.Enable(false);
+  }
+}
+
+void MainFrame::OnHideLogView(wxCommandEvent& event) {
+  if (project_frame_ != nullptr) {
+    project_frame_->ShowLogView(false);;
+    project_frame_->Layout();
+  }
+}
+
+void MainFrame::OnUpdateShowLogView(wxUpdateUIEvent& event) {
+  if (project_frame_ != nullptr) {
+    event.Enable(!project_frame_->IsLogViewVisible());
+  } else {
+    event.Enable(false);
+  }
+}
+
+void MainFrame::OnShowLogView(wxCommandEvent& nt) {
+  if (project_frame_ != nullptr) {
+    project_frame_->ShowLogView(true);
+    project_frame_->Layout();
+  }
+}
+void MainFrame::OnAddLogMessage(wxCommandEvent& event) {
+  AddLogMessageDialog dialog(this);
+  dialog.ShowModal();
 }
 
 }

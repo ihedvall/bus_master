@@ -18,6 +18,7 @@ class ProjectTree;
 class PropertyView;
 class EnvironmentView;
 class DatabaseView;
+class LogListView;
 
 class ProjectFrame : public wxPanel {
  public:
@@ -33,14 +34,18 @@ class ProjectFrame : public wxPanel {
   void RedrawLeft();
   void RedrawRight();
 
-  private:
+  void CheckLogView();
+  [[nodiscard]] bool IsLogViewVisible() const;
+  void ShowLogView(bool show);
+ private:
   ProjectView* view_ = nullptr;
-
   ProjectTree* project_panel_ = nullptr;
   PropertyView* property_view_ = nullptr;
   EnvironmentView* environment_view_ = nullptr;
   DatabaseView* database_view_ = nullptr;
   wxSplitterWindow* splitter_ = nullptr;
+  LogListView* log_view_ = nullptr;
+
   wxDECLARE_DYNAMIC_CLASS(ProjectFrame);
   wxDECLARE_EVENT_TABLE();
 

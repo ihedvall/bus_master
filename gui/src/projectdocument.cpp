@@ -37,13 +37,20 @@ wxBEGIN_EVENT_TABLE(ProjectDocument, wxDocument)
   EVT_MENU(kIdEditProject, ProjectDocument::OnEditProject)
 
   EVT_UPDATE_UI(kIdAddEnvironment, ProjectDocument::OnUpdateProjectExist)
-  EVT_MENU(kIdAddEnvironment, ProjectDocument::OnAddEnvironment)
+  EVT_UPDATE_UI(kIdAddBrokerEnvironment, ProjectDocument::OnUpdateProjectExist)
+  EVT_MENU(kIdAddBrokerEnvironment, ProjectDocument::OnAddBrokerEnvironment)
 
   EVT_UPDATE_UI(kIdEditEnvironment, ProjectDocument::OnUpdateEnvironmentSelected)
   EVT_MENU(kIdEditEnvironment, ProjectDocument::OnEditEnvironment)
 
   EVT_UPDATE_UI(kIdDeleteEnvironment, ProjectDocument::OnUpdateEnvironmentSelected)
   EVT_MENU(kIdDeleteEnvironment, ProjectDocument::OnDeleteEnvironment)
+
+  EVT_UPDATE_UI(kIdEnableEnvironment, ProjectDocument::OnUpdateEnableEnvironment)
+  EVT_MENU(kIdEnableEnvironment, ProjectDocument::OnEnableEnvironment)
+
+  EVT_UPDATE_UI(kIdDisableEnvironment, ProjectDocument::OnUpdateDisableEnvironment)
+  EVT_MENU(kIdDisableEnvironment, ProjectDocument::OnDisableEnvironment)
 
   EVT_UPDATE_UI(kIdStartEnvironment, ProjectDocument::OnUpdateStartEnvironment)
   EVT_MENU(kIdStartEnvironment, ProjectDocument::OnStartEnvironment)
@@ -167,6 +174,11 @@ bool ProjectDocument::DoOpenDocument(const wxString& filename) {
   VerifyProjectPath();
 
   const bool read = project_->ReadConfig();
+  if (!read) {
+    LOG_ERROR() << "Error reading the project. File: " << project_->ConfigFile();
+  } else {
+    LOG_INFO() << "Opened the project. File: " << project_->ConfigFile();
+  }
   return read;
 }
 
@@ -175,6 +187,8 @@ bool ProjectDocument::OnCloseDocument() {
     const bool save = project_->WriteConfig();
     if (!save) {
       LOG_ERROR() << "Error saving project. File: " << project_->ConfigFile();
+    } else {
+      LOG_INFO() << "Saved the project. File: " << project_->ConfigFile();
     }
     project_.reset();
   }
@@ -193,6 +207,24 @@ void ProjectDocument::OnUpdateProjectExist(wxUpdateUIEvent& event) {
 void ProjectDocument::OnUpdateEnvironmentSelected(wxUpdateUIEvent& event) {
   if (const IEnvironment* env = GetCurrentEnvironment(); env != nullptr) {
     event.Enable(true);
+  } else {
+    event.Enable(false);
+  }
+}
+
+void ProjectDocument::OnUpdateEnableEnvironment(wxUpdateUIEvent& event) {
+  if (const IEnvironment* env = GetCurrentEnvironment();
+      env != nullptr) {
+    event.Enable(!env->IsEnabled());
+  } else {
+    event.Enable(false);
+  }
+}
+
+void ProjectDocument::OnUpdateDisableEnvironment(wxUpdateUIEvent& event) {
+  if (const IEnvironment* env = GetCurrentEnvironment();
+      env != nullptr) {
+    event.Enable(env->IsEnabled());
   } else {
     event.Enable(false);
   }
@@ -259,7 +291,7 @@ void ProjectDocument::OnEditProject(wxCommandEvent& event) {
   }
 }
 
-void ProjectDocument::OnAddEnvironment(wxCommandEvent& event) {
+void ProjectDocument::OnAddBrokerEnvironment(wxCommandEvent& event) {
   auto* frame = GetMainFrame();
   auto* project = GetProject();
   const auto* current_env = GetCurrentEnvironment();
@@ -267,10 +299,7 @@ void ProjectDocument::OnAddEnvironment(wxCommandEvent& event) {
   if (project == nullptr || frame == nullptr) {
     return;
   }
-  EnvironmentTypeDialog type_dialog(frame);
-  if (type_dialog.ShowModal() != wxID_SAVE) {
-    return;
-  }
+
   std::vector<std::string> invalid_names;
   for (const auto& env : project->Environments()) {
     if (env) {
@@ -278,7 +307,7 @@ void ProjectDocument::OnAddEnvironment(wxCommandEvent& event) {
     }
   }
 
-  const TypeOfEnvironment type = type_dialog.GetType();
+  constexpr auto type = TypeOfEnvironment::BrokerEnvironment;
   IEnvironment new_env;
   if (current_env != nullptr) {
     new_env = *current_env;
@@ -294,8 +323,11 @@ void ProjectDocument::OnAddEnvironment(wxCommandEvent& event) {
 
   IEnvironment* env = project_->CreateEnvironment(type);
   if (env == nullptr ) {
+    LOG_ERROR() << "Error creating environment. Type: "
+                << IEnvironment::TypeToString(type);
     return;
   }
+
   *env = new_env;
   SetCurrentItem(ProjectItemType::Environment, env->Name());
   Modify(true);
@@ -354,6 +386,25 @@ void ProjectDocument::OnDeleteEnvironment(wxCommandEvent& event) {
   SetCurrentItem(ProjectItemType::Environments, "");
   Modify(true);
   UpdateAllViews();
+}
+
+void ProjectDocument::OnEnableEnvironment(wxCommandEvent& event) {
+  if (auto* current_env = GetCurrentEnvironment(); current_env != nullptr) {
+    current_env->Enable(true);
+    Modify(true);
+    UpdateAllViews();
+  }
+}
+
+void ProjectDocument::OnDisableEnvironment(wxCommandEvent& event) {
+  if (auto* current_env = GetCurrentEnvironment(); current_env != nullptr) {
+    if (current_env->IsStarted()) {
+      current_env->Stop();
+    }
+    current_env->Enable(false);
+    Modify(true);
+    UpdateAllViews();
+  }
 }
 
 void ProjectDocument::OnStartEnvironment(wxCommandEvent& event) {
@@ -569,10 +620,16 @@ MainFrame* ProjectDocument::GetMainFrame() const {
 }
 
 IEnvironment* ProjectDocument::GetCurrentEnvironment() const {
-  if (!project_ || current_type_ != ProjectItemType::Environment) {
-    return nullptr;
+  if (project_) {
+    switch (current_type_) {
+      case ProjectItemType::Environment:
+      case ProjectItemType::Environments:
+        return project_->GetEnvironment(GetCurrentId());
+      default:
+        break;
+    }
   }
-  return project_->GetEnvironment(GetCurrentId());
+  return nullptr;
 }
 
 IDatabase* ProjectDocument::GetCurrentDatabase() const {

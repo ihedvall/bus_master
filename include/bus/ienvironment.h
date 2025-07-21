@@ -22,7 +22,8 @@ namespace bus {
 
 enum class TypeOfEnvironment : int {
   DummyEnvironment = 0,
-  SuperviseMasterEnvironment = 1
+  SuperviseMasterEnvironment = 1,
+  BrokerEnvironment = 2,
 };
 
 class IEnvironment {
@@ -60,6 +61,8 @@ class IEnvironment {
   void Port(uint16_t port) {port_ = port; }
   [[nodiscard]] uint16_t Port() const { return port_; }
 
+  void Enable(bool enable) { enabled_ = enable; }
+  [[nodiscard]] bool IsEnabled() const { return enabled_; }
   [[nodiscard]] virtual bool IsStarted() const {return started_; }
   [[nodiscard]] virtual bool IsOperable() const {return operable_; }
 
@@ -80,8 +83,8 @@ class IEnvironment {
   std::string name_;
   std::string description_;
   std::string config_file_;
+  bool enabled_ = true;
 
-  // ToDo: Generate and store these properties
   std::string shared_memory_name_;
   std::string host_name_ = "127.0.0.1";
   uint16_t port_ = 43611;

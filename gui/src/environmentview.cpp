@@ -11,23 +11,39 @@
 #include "projectview.h"
 #include "windowid.h"
 
+namespace {
+constexpr int kEnvEnableBmp = 0;
+constexpr int kEnvDisableBmp = 1;
+constexpr int kEnvRunningBmp = 2;
+constexpr int kEnvFailingBmp = 3;
+constexpr int kEnvStoppedBmp = 4;
+}
+
 namespace bus {
 wxBEGIN_EVENT_TABLE(EnvironmentView, wxPanel)
+    EVT_LIST_ITEM_SELECTED(kIdEnvironmentList, EnvironmentView::OnItemSelected)
     EVT_LIST_ITEM_RIGHT_CLICK(kIdEnvironmentList, EnvironmentView::OnRightClick)
 wxEND_EVENT_TABLE()
 
 EnvironmentView::EnvironmentView(wxSplitterWindow* parent)
-    : wxPanel(parent, kIdEnvironmentPanel) {
+    : wxPanel(parent, kIdEnvironmentPanel),
+      image_list_(16,16,false,5) {
+    wxBitmap list_view("LIST_VIEW", wxBITMAP_TYPE_BMP_RESOURCE);
+
   auto* sizer = new wxBoxSizer(wxVERTICAL);
   list_ = new wxListView(this, kIdEnvironmentList,
                          wxDefaultPosition, wxDefaultSize,
                          wxLC_REPORT | wxLC_SINGLE_SEL);
-  list_->AppendColumn("State", wxLIST_FORMAT_LEFT, 50);
+  list_->AppendColumn("Enabled", wxLIST_FORMAT_LEFT, 100);
   list_->AppendColumn("Name", wxLIST_FORMAT_LEFT, 150);
+  list_->AppendColumn("Type", wxLIST_FORMAT_LEFT, 100);
   list_->AppendColumn("Status", wxLIST_FORMAT_LEFT, 100);
   list_->AppendColumn("Description", wxLIST_FORMAT_LEFT, 400);
   sizer->Add(list_, 1, wxALL | wxEXPAND, 0);
   SetSizer(sizer);
+
+  image_list_.Add(list_view);
+  list_->SetImageList(&image_list_, wxIMAGE_LIST_SMALL);
 }
 
 ProjectDocument *EnvironmentView::GetDocument() const {
@@ -66,62 +82,60 @@ void EnvironmentView::Redraw() {
     }
     // ToDo: Fix Bitmap
     std::string status;
+    int status_bmp = kEnvStoppedBmp;
     if (env->IsStarted() && env->IsOperable()) {
       status = "Running";
+      status_bmp = kEnvRunningBmp;
     } else if (env->IsStarted() && !env->IsOperable()) {
       status = "Failing";
+      status_bmp = kEnvFailingBmp;
     } else if (!env->IsStarted() && env->IsOperable()) {
       status = "Stopping";
     } else {
       status = "Stopped";
     }
-    const auto index = list_->InsertItem(line, "");
+    const auto index = list_->InsertItem(line, "",
+                           env->IsEnabled() ? kEnvEnableBmp : kEnvDisableBmp);
+    const std::string_view type = IEnvironment::TypeToString(env->Type());
     list_->SetItem(index, 1, wxString::FromUTF8(env->Name()));
-    list_->SetItem(index, 2, wxString::FromUTF8(status));
-    list_->SetItem(index, 3, wxString::FromUTF8(env->Description()));
+    list_->SetItem(index, 2, wxString::FromUTF8(type));
+    list_->SetItem(index, 3, wxString::FromUTF8(status), status_bmp);
+    list_->SetItem(index, 4, wxString::FromUTF8(env->Description()));
     ++line;
   }
 
 }
 
 void EnvironmentView::OnRightClick(wxListEvent& event) {
-  /* ToDo: Fix right-click
-  auto* doc = GetDocument();
+  const auto* doc = GetDocument();
   if (doc == nullptr) {
     return;
   }
-  auto* project = doc->GetProject();;
-  if (project == nullptr) {
+  const auto* env = doc->GetCurrentEnvironment();
+  if (env == nullptr) {
     return;
   }
-  const auto selected_item = event.GetIndex();
-  if (selected_item < 0) {
-    return;
+  wxMenu menu("Environment");
+  menu.Append(kIdEditEnvironment, wxGetStockLabel(wxID_EDIT),
+              "Change the environment configuration");
+  menu.Append(kIdDeleteEnvironment, wxGetStockLabel(wxID_DELETE),
+              "Delete the environment configuration");
+  menu.AppendSeparator();
+  menu.Append(kIdEnableEnvironment, "Enable", "Enable the environment.");
+  menu.Append(kIdDisableEnvironment, "Disable", "Disable the environment.");
+  menu.AppendSeparator();
+  menu.Append(kIdStartEnvironment, "Start", "Start the environment");
+  menu.Append(kIdStopEnvironment, "Stop", "Stop the environment");
+  PopupMenu(&menu, event.GetPoint());
+}
+
+void EnvironmentView::OnItemSelected(wxListEvent& event) {
+  const wxListItem& current_item = event.GetItem();
+  wxString name = list_->GetItemText(current_item, 1);
+  if (auto* doc = GetDocument();doc != nullptr) {
+    doc->SetCurrentItem(ProjectItemType::Environments, name.ToStdString());
   }
 
-  switch (doc->GetCurrentType()) {
-    case ProjectItemType::Environment:
-      if (auto* env = project->GetEnvironment(doc->GetCurrentId());
-          env != nullptr ) {
-        wxMenu menu("Environment");
-        menu.Append(kIdAddEnvironment, wxGetStockLabel(wxID_ADD),
-                    "Add a new environment");
-        menu.Append(kIdEditEnvironment, wxGetStockLabel(wxID_EDIT),
-                    "Change the environment configuration");
-        menu.Append(kIdDeleteEnvironment, wxGetStockLabel(wxID_DELETE),
-                    "Delete the environment configuration");
-        menu.AppendSeparator();
-        menu.Append(kIdStartEnvironment, "Start", "Start Environment");
-        menu.Append(kIdStopEnvironment, "Stop", "Start Environment");
-        PopupMenu(&menu, event.GetPoint());
-      }
-      break;
-
-
-    default: // Show nothing
-      break;
-  }
-   */
 }
 
 }  // namespace bus

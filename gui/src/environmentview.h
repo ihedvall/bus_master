@@ -28,9 +28,12 @@ class EnvironmentView : public wxPanel {
  private:
   ProjectView* view_ = nullptr;
   wxListView* list_ = nullptr;
+  wxImageList image_list_;
+
   void Redraw();
 
   void OnRightClick(wxListEvent& event);
+  void OnItemSelected(wxListEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 

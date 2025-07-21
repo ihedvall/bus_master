@@ -16,8 +16,8 @@ using namespace util::xml;
 using namespace util::string;
 
 namespace {
-  constexpr std::array<std::string_view, 2> kTypeList =
-    { "Dummy", "Supervise Master" };
+  constexpr std::array<std::string_view, 3> kTypeList =
+    { "Dummy", "Supervise Master", "Broker Rx Main" };
 }
 
 namespace bus {
@@ -53,6 +53,7 @@ void IEnvironment::WriteConfig(IXmlNode& root_node) const {
    env_node.SetProperty("Name", name_);
    env_node.SetProperty("Description", description_);
    env_node.SetProperty("ConfigFile", config_file_);
+   env_node.SetProperty("Enabled", enabled_);
    env_node.SetProperty("SharedMemoryName", shared_memory_name_);
    env_node.SetProperty("HostName", host_name_);
    env_node.SetProperty("Port", port_);
@@ -67,6 +68,7 @@ void IEnvironment::ReadConfig(const IXmlNode& env_node) {
   // right environment type.
   description_ = env_node.Property<std::string>("Description");
   config_file_ = env_node.Property<std::string>("ConfigFile");
+  enabled_ = env_node.Property<bool>("Enabled", true);
   shared_memory_name_ = env_node.Property<std::string>("SharedMemoryName");
   host_name_ = env_node.Property<std::string>("HostName", "127.0.0.1");
   port_ = env_node.Property<uint16_t>("Port", 43611);
@@ -101,6 +103,7 @@ void IEnvironment::ToProperties(std::vector<BusProperty>& properties) const {
   properties.emplace_back("Name", Name());
   properties.emplace_back("Description", Description());
   properties.emplace_back("Configuration File", ConfigFile());
+  properties.emplace_back("Enabled", IsEnabled() ? "Yes" : "No");
   properties.emplace_back("Shared Memory Name", SharedMemoryName());
   properties.emplace_back("Host Name", HostName());
   properties.emplace_back("TCP/IP Port", std::to_string(port_));

@@ -13,6 +13,7 @@ constexpr wxWindowID kIdPropertyList = 2;
 constexpr wxWindowID kIdEnvironmentList = 3;
 constexpr wxWindowID kIdDatabaseList = 4;
 constexpr wxWindowID kIdTimer = 5;
+constexpr wxWindowID kIdLogListView = 6;
 
 constexpr wxWindowID kIdLeftPanel = 20;
 constexpr wxWindowID kIdPropertyPanel = 21;
@@ -23,12 +24,19 @@ constexpr wxWindowID kIdOpenLogFile = 100;
 constexpr wxWindowID kIdConfigPicker = 101;
 constexpr wxWindowID kIdSave = 102;
 constexpr wxWindowID kIdEditProject = 103;
+constexpr wxWindowID kIdHideLogView = 104;
+constexpr wxWindowID kIdShowLogView = 105;
+constexpr wxWindowID kIdAddLogMessage = 106;
+constexpr wxWindowID kIdSendLogMessage = 107;
 
 constexpr wxWindowID kIdAddEnvironment = 200;
-constexpr wxWindowID kIdEditEnvironment = 201;
-constexpr wxWindowID kIdDeleteEnvironment = 202;
-constexpr wxWindowID kIdStartEnvironment = 203;
-constexpr wxWindowID kIdStopEnvironment = 204;
+constexpr wxWindowID kIdAddBrokerEnvironment = 201;
+constexpr wxWindowID kIdEditEnvironment = 210;
+constexpr wxWindowID kIdDeleteEnvironment = 211;
+constexpr wxWindowID kIdEnableEnvironment = 212;
+constexpr wxWindowID kIdDisableEnvironment = 213;
+constexpr wxWindowID kIdStartEnvironment = 214;
+constexpr wxWindowID kIdStopEnvironment = 215;
 
 constexpr wxWindowID kIdAddDatabase = 300;
 constexpr wxWindowID kIdEditDatabase = 301;

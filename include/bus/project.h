@@ -83,6 +83,8 @@ private:
   std::vector<std::unique_ptr<IDatabase>> databases_;
   std::vector<std::unique_ptr<ISource>> sources_;
   std::vector<std::unique_ptr<IDestination>> destinations_;
+
+  void CheckEnvironmentPort(IEnvironment* new_env);
 };
 
 } // bus

@@ -4,7 +4,7 @@
 
 include (FetchContent)
 
-FetchContent_Declare(bus-message-lib
+FetchContent_Declare(busmessage
         GIT_REPOSITORY https://github.com/ihedvall/bus_message_lib.git
         GIT_TAG HEAD)
 
@@ -13,9 +13,9 @@ set(BUS_TEST OFF)
 set(BUS_TOOLS ON)
 set(BUS_INTERFACE ON)
 
-FetchContent_MakeAvailable(bus-message-lib)
+FetchContent_MakeAvailable(busmessage)
 
 cmake_print_variables(
-        bus-message-lib_POPULATED
-        bus-message-lib_SOURCE_DIR
-        bus-message-lib_BINARY_DIR )
+        busmessage_POPULATED
+        busmessage_SOURCE_DIR
+        busmessage_BINARY_DIR )

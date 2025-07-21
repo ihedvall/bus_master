@@ -3,21 +3,28 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <filesystem>
-#include <memory>
-#include <vector>
+#include "bus/project.h"
 
-#include <util/logstream.h>
 #include <util/ixmlfile.h>
+#include <util/logstream.h>
 #include <util/stringutil.h>
 
-#include "bus/project.h"
+#include <filesystem>
+#include <memory>
+#include <set>
+#include <vector>
+
+#include "bus/brokerenvironment.h"
 #include "bus/ienvironment.h"
 
 using namespace std::filesystem;
 using namespace util::log;
 using namespace util::xml;
 using namespace util::string;
+
+namespace {
+constexpr uint16_t kServerPort = 43611;
+}
 
 namespace bus {
 
@@ -259,10 +266,18 @@ IEnvironment* Project::CreateEnvironment(TypeOfEnvironment type) {
       break;
     }
 
+    case TypeOfEnvironment::BrokerEnvironment: {
+      auto broker = std::make_unique<BrokerEnvironment>();
+      environments_.emplace_back(std::move(broker));
+      break;
+    }
+
     default:
       return nullptr;
   }
-  return environments_.empty() ? nullptr : environments_.back().get();
+  auto* new_env = environments_.back().get();
+  CheckEnvironmentPort(new_env);
+  return new_env;
 }
 
 IEnvironment* Project::GetEnvironment(const std::string& name) const {
@@ -406,6 +421,26 @@ const std::vector<std::unique_ptr<IDestination>>& Project::Destinations() const 
 std::vector<std::unique_ptr<IDestination>>& Project::Destinations() {
   return destinations_;
 }
+void Project::CheckEnvironmentPort(IEnvironment* new_env) {
+  std::set<uint16_t> ports;
+  for (auto& env : environments_) {
+    if (env.get() == new_env) {
+      continue;
+    }
+    ports.emplace(env->Port());
+  }
 
+  if (new_env != nullptr ) {
+    if (ports.find(new_env->Port()) == ports.cend()) {
+      return; // Port OK
+    }
+    for(uint16_t port = kServerPort; port < 0xFFFF; ++port) {
+      if (ports.find(port) == ports.cend()) {
+        new_env->Port(port);
+        break;
+      }
+    }
+  }
+}
 
 } // bus

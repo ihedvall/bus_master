@@ -143,15 +143,16 @@ void PropertyView::OnRightClick(wxListEvent& event) {
       if (auto* env = project->GetEnvironment(doc->GetCurrentId());
           env != nullptr ) {
           wxMenu menu("Environment");
-          menu.Append(kIdAddEnvironment, wxGetStockLabel(wxID_ADD),
-                           "Add a new environment");
           menu.Append(kIdEditEnvironment, wxGetStockLabel(wxID_EDIT),
                       "Change the environment configuration");
           menu.Append(kIdDeleteEnvironment, wxGetStockLabel(wxID_DELETE),
                       "Delete the environment configuration");
           menu.AppendSeparator();
-          menu.Append(kIdStartEnvironment, "Start", "Start Environment");
-          menu.Append(kIdStopEnvironment, "Stop", "Start Environment");
+          menu.Append(kIdEnableEnvironment, "Enable", "Enable the environment.");
+          menu.Append(kIdDisableEnvironment, "Disable", "Disable the environment.");
+          menu.AppendSeparator();
+          menu.Append(kIdStartEnvironment, "Start", "Start the environment");
+          menu.Append(kIdStopEnvironment, "Stop", "Stop the environment");
           PopupMenu(&menu, event.GetPoint());
       }
       break;

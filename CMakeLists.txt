@@ -60,6 +60,8 @@ add_library(bus-master-lib
         include/bus/isource.h
         src/idestination.cpp
         include/bus/idestination.h
+        src/brokerenvironment.cpp
+        include/bus/brokerenvironment.h
 
 )
 
@@ -67,6 +69,7 @@ target_include_directories(bus-master-lib PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${utillib_SOURCE_DIR}/include
+        ${busmessage_SOURCE_DIR}/include
        )
 
 

@@ -37,13 +37,19 @@ add_executable(bus_master
         src/unknownsourcedialog.cpp
         src/unknownsourcedialog.h
         src/unknowndestinationdialog.cpp
-        src/unknowndestinationdialog.h)
+        src/unknowndestinationdialog.h
+        src/loglistview.cpp
+        src/loglistview.h
+        src/addlogmessagedialog.cpp
+        src/addlogmessagedialog.h)
 
 
-target_include_directories(bus_master PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(bus_master PRIVATE ${wxWidgets_INCLUDE_DIRS})
-target_include_directories(bus_master PRIVATE ${Boost_INCLUDE_DIRS})
-
+#target_include_directories(bus_master PRIVATE ${CMAKE_SOURCE_DIR}/include)
+#target_include_directories(bus_master PRIVATE ${utillib_SOURCE_DIR}/include)
+#target_include_directories(bus_master PRIVATE ${busmessage_SOURCE_DIR}/include)
+#target_include_directories(bus_master PRIVATE ${wxWidgets_INCLUDE_DIRS})
+#target_include_directories(bus_master PRIVATE ${Boost_INCLUDE_DIRS})
+target_include_directories(bus_master PRIVATE util)
 if(MSVC)
   target_link_options(bus_master PRIVATE /SUBSYSTEM:WINDOWS)
   target_compile_definitions(bus_master PRIVATE _WIN32_WINNT=0x0A00)
@@ -59,6 +65,8 @@ if(MSVC)
 endif()
 
 target_link_libraries(bus_master PRIVATE util)
+target_link_libraries(bus_master PRIVATE bus-message-lib)
+target_link_libraries(bus_master PRIVATE bus-message-interface)
 target_link_libraries(bus_master PRIVATE bus-master-lib)
 target_link_libraries(bus_master PRIVATE sago::platform_folders)
 target_link_libraries(bus_master PRIVATE Boost::locale)
