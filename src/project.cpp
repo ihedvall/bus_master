@@ -16,6 +16,8 @@
 
 #include "bus/brokerenvironment.h"
 #include "bus/ienvironment.h"
+#include "bus/dbcdatabase.h"
+#include "bus/mdftrafficgenerator.h"
 
 using namespace std::filesystem;
 using namespace util::log;
@@ -113,8 +115,8 @@ bool Project::ReadConfig() {
         if (type_name.empty()) {
           type_name = env_node->Property<std::string>("Type");
         }
-        TypeOfEnvironment type = IEnvironment::TypeFromString(type_name);
-        if (auto env = CreateEnvironment(type); env) {
+        const TypeOfEnvironment type = IEnvironment::TypeFromString(type_name);
+        if (auto* env = CreateEnvironment(type); env != nullptr) {
           env->ReadConfig(*env_node);
         }
       }
@@ -133,7 +135,7 @@ bool Project::ReadConfig() {
           type_name = db_node->Property<std::string>("Type");
         }
         TypeOfDatabase type = IDatabase::TypeFromString(type_name);
-        if (auto db = CreateDatabase(type); db) {
+        if (auto* db = CreateDatabase(type); db != nullptr) {
           db->ReadConfig(*db_node);
         }
       }
@@ -152,7 +154,7 @@ bool Project::ReadConfig() {
           type_name = source_node->Property<std::string>("Type");
         }
         TypeOfSource type = ISource::TypeFromString(type_name);
-        if (auto source = CreateSource(type); source) {
+        if (auto* source = CreateSource(type); source != nullptr) {
           source->ReadConfig(*source_node);
         }
       }
@@ -171,8 +173,38 @@ bool Project::ReadConfig() {
           type_name = dest_node->Property<std::string>("Type");
         }
         TypeOfDestination type = IDestination::TypeFromString(type_name);
-        if (auto dest = CreateDestination(type); dest) {
+        if (auto* dest = CreateDestination(type); dest != nullptr) {
           dest->ReadConfig(*dest_node);
+        }
+      }
+    }
+
+    for (auto& env : Environments()) {
+      if (env && env->IsEnabled()) {
+        env->Enable(true);
+        if (!env->IsEnabled()) {
+          LOG_ERROR() << "Didn't enable the environment. Name: "
+                      << env->Name();
+        }
+      }
+    }
+
+    for (auto& db : Databases()) {
+      if (db && db->IsEnabled()) {
+        db->Enable(true);
+        if (!db->IsEnabled()) {
+          LOG_ERROR() << "Didn't enable the database. Name: "
+                      << db->Name();
+        }
+      }
+    }
+
+    for (auto& source : Sources()) {
+      if (source && source->IsEnabled()) {
+        source->Enable(true);
+        if (!source->IsEnabled()) {
+          LOG_ERROR() << "Didn't enable the source task. Name: "
+                      << source->Name();
         }
       }
     }
@@ -324,6 +356,12 @@ IDatabase* Project::CreateDatabase(TypeOfDatabase type) {
       break;
     }
 
+    case TypeOfDatabase::DbcFile: {
+      auto dummy = std::make_unique<DbcDatabase>();
+      databases_.emplace_back(std::move(dummy));
+      break;
+    }
+
     default:
       return nullptr;
   }
@@ -358,6 +396,11 @@ ISource* Project::CreateSource(TypeOfSource type) {
       break;
     }
 
+    case TypeOfSource::Mdf: {
+      auto mdf_source = std::make_unique<MdfTrafficGenerator>();
+      sources_.emplace_back(std::move(mdf_source));
+      break;
+    }
     default:
       return nullptr;
   }

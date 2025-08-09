@@ -5,34 +5,35 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
 
 #include <wx/wx.h>
 #include <wx/filepicker.h>
-#include "bus/project.h"
+#include "bus/isource.h"
 
 namespace bus {
 
-class ProjectDialog : public wxDialog {
-public:
-  explicit ProjectDialog(wxWindow *parent);
-  void SetProject(const Project& project);
-  /**
-   * @brief Updates the project properties.
-   * @param project Reference to a project object.
-   * @return True if the project object was modified.
-   */
-  bool GetProject(Project& project);
-
+class MdfDialog : public wxDialog {
+ public:
+  MdfDialog(wxWindow *parent);
+  void SetInvalidNames(std::vector<std::string>& invalid_names);
+  void SetSource(const ISource& source);
+  bool GetSource(ISource& source);
   bool TransferDataToWindow() override;
   bool TransferDataFromWindow() override;
-  private:
+ private:
 
   wxString name_;
   wxString description_;
-  wxString config_file_;
-  wxFilePickerCtrl* config_picker_ = nullptr;
+  wxString filename_;
+
+  wxFilePickerCtrl* file_picker_ = nullptr;
   wxTextCtrl* name_ctrl_ = nullptr;
-  wxTextCtrl* desc_ctrl_ = nullptr;
+  std::vector<std::string> invalid_names_;
+
+  [[nodiscard]] bool IsValidName() const;
+
   void OnUpdateSave(wxUpdateUIEvent &event);
   void OnSave(wxCommandEvent& event);
   void OnConfigPicker(wxFileDirPickerEvent& event);
@@ -41,4 +42,6 @@ public:
 };
 
 } // bus
+
+
 

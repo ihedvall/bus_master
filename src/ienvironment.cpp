@@ -76,7 +76,7 @@ void IEnvironment::ReadConfig(const IXmlNode& env_node) {
 
 std::string_view IEnvironment::TypeToString(TypeOfEnvironment type) {
   for (size_t index = 0; index < kTypeList.size(); ++index) {
-    const auto& env_type = static_cast<TypeOfEnvironment>(index);
+    const auto env_type = static_cast<TypeOfEnvironment>(index);
     if (env_type == type) {
       return kTypeList[index];
     }
@@ -86,7 +86,7 @@ std::string_view IEnvironment::TypeToString(TypeOfEnvironment type) {
 
 TypeOfEnvironment IEnvironment::TypeFromString(const std::string& type) {
   for (size_t index = 0; index < kTypeList.size(); ++index) {
-    const auto& env_type = static_cast<TypeOfEnvironment>(index);
+    const auto env_type = static_cast<TypeOfEnvironment>(index);
     if (IEquals(std::string(kTypeList[index]),type) ) {
       return env_type;
     }

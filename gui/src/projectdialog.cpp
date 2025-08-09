@@ -5,6 +5,8 @@
 
 #include "projectdialog.h"
 
+#include <filesystem>
+
 #include <wx/config.h>
 #include <wx/valgen.h>
 
@@ -13,6 +15,7 @@
 #include "windowid.h"
 
 using namespace util::supervise;
+using namespace std::filesystem;
 
 namespace bus {
 wxBEGIN_EVENT_TABLE(ProjectDialog, wxDialog) //NOLINT
@@ -33,9 +36,9 @@ ProjectDialog::ProjectDialog(wxWindow *parent)
   name_ctrl_->SetMaxLength(40);
   name_ctrl_->SetMinSize({40*8,-1});
 
-  auto* description = new wxTextCtrl(this, wxID_ANY, wxEmptyString,wxDefaultPosition,wxDefaultSize,
+  desc_ctrl_ = new wxTextCtrl(this, wxID_ANY, wxEmptyString,wxDefaultPosition,wxDefaultSize,
       wxTE_LEFT,wxTextValidator(wxFILTER_NONE, &description_));
-  description->SetMinSize({80*8,-1});
+  desc_ctrl_->SetMinSize({80*8,-1});
 
   config_picker_ = new wxFilePickerCtrl(this, kIdConfigPicker, wxEmptyString,
                                      L"Project File (*.xml)|*.xml|All Files (*.*)|*.*", "*.xml",
@@ -74,7 +77,7 @@ ProjectDialog::ProjectDialog(wxWindow *parent)
   auto* description_sizer = new wxBoxSizer(wxHORIZONTAL);
   description_label->SetMinSize({label_width, -1});
   description_sizer->Add(description_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT , 5);
-  description_sizer->Add(description, 1,  wxLEFT | wxRIGHT | wxEXPAND, 5);
+  description_sizer->Add(desc_ctrl_, 1,  wxLEFT | wxRIGHT | wxEXPAND, 5);
 
   auto* config_sizer = new wxBoxSizer(wxHORIZONTAL);
   config_label->SetMinSize({label_width, -1});
@@ -117,12 +120,27 @@ void ProjectDialog::OnUpdateSave(wxUpdateUIEvent &event) {
 void ProjectDialog::OnConfigPicker(wxFileDirPickerEvent& event) {
   const wxString file = event.GetPath();
   try {
-    std::filesystem::path full_name(file.ToStdWstring());
+    path full_name(file.ToStdWstring());
     if (auto* config = wxConfig::Get();
         config != nullptr) {
       config->Write("/ProjectDialog/Path",
         wxString(full_name.parent_path().wstring()));
     }
+    // Check if the selected file exist and if so read in any name
+    // and description
+    if (exists(full_name)) {
+      Project temp;
+      temp.ConfigFile(full_name.string());
+
+      const bool read = temp.ReadConfig();
+      if (read && name_ctrl_ != nullptr && name_.IsEmpty()) {
+        name_ctrl_->SetValue( temp.Name() );
+      }
+      if (read && desc_ctrl_ != nullptr && description_.IsEmpty()) {
+        desc_ctrl_->SetValue(temp.Description());
+      }
+    }
+
   } catch (const std::exception&) {
   }
 }
@@ -160,7 +178,6 @@ bool ProjectDialog::GetProject(Project& project) {
 }
 
 bool ProjectDialog::TransferDataToWindow() {
-  std::wostringstream app_arg;
   config_picker_->SetPath(config_file_);
   return wxWindowBase::TransferDataToWindow();
 }

@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <source_location>
 
 #include "mainframe.h"
 #include "projectdocument.h"
@@ -38,7 +39,10 @@ namespace {
     util::log::LogMessage msg;
     msg.message = message;
     msg.severity = static_cast<util::log::LogSeverity>(severity);
-    msg.location = location;
+    msg.line = location.line();
+    msg.column = location.column();
+    msg.file = location.file_name();
+    msg.function = location.function_name();
     util::log::LogConfig::Instance().AddLogMessage(msg);
   }
 

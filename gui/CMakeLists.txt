@@ -41,7 +41,17 @@ add_executable(bus_master
         src/loglistview.cpp
         src/loglistview.h
         src/addlogmessagedialog.cpp
-        src/addlogmessagedialog.h)
+        src/addlogmessagedialog.h
+        src/metricview.cpp
+        src/metricview.h
+        src/mdfdialog.cpp
+        src/mdfdialog.h
+        src/messagelistview.cpp
+        src/messagelistview.h
+        src/sourceview.cpp
+        src/sourceview.h
+        src/destinationview.cpp
+        src/destinationview.h)
 
 
 #target_include_directories(bus_master PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -49,7 +59,7 @@ add_executable(bus_master
 #target_include_directories(bus_master PRIVATE ${busmessage_SOURCE_DIR}/include)
 #target_include_directories(bus_master PRIVATE ${wxWidgets_INCLUDE_DIRS})
 #target_include_directories(bus_master PRIVATE ${Boost_INCLUDE_DIRS})
-target_include_directories(bus_master PRIVATE util)
+#target_include_directories(bus_master PRIVATE util)
 if(MSVC)
   target_link_options(bus_master PRIVATE /SUBSYSTEM:WINDOWS)
   target_compile_definitions(bus_master PRIVATE _WIN32_WINNT=0x0A00)
@@ -68,6 +78,9 @@ target_link_libraries(bus_master PRIVATE util)
 target_link_libraries(bus_master PRIVATE bus-message-lib)
 target_link_libraries(bus_master PRIVATE bus-message-interface)
 target_link_libraries(bus_master PRIVATE bus-master-lib)
+target_link_libraries(bus_master PRIVATE metric-lib)
+target_link_libraries(bus_master PRIVATE dbc)
+target_link_libraries(bus_master PRIVATE mdf)
 target_link_libraries(bus_master PRIVATE sago::platform_folders)
 target_link_libraries(bus_master PRIVATE Boost::locale)
 target_link_libraries(bus_master PRIVATE Boost::process)

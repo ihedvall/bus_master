@@ -11,6 +11,7 @@
 #include <atomic>
 
 #include "bus/busproperty.h"
+#include "mdf/isourceinformation.h"
 
 namespace util::xml {
 class IXmlNode;
@@ -40,8 +41,14 @@ class ISource {
   void Description(std::string desc) { description_ = std::move(desc); }
   [[nodiscard]] const std::string& Description() const { return description_; }
 
-  void Enable(bool enable) { enabled_ = enable; }
-    [[nodiscard]] bool Enabled() const {return enabled_; }
+  virtual void Enable(bool enable);
+  [[nodiscard]] bool IsEnabled() const {return enabled_; }
+
+  void Filename(std::string filename) { filename_ = std::move(filename); }
+  [[nodiscard]] const std::string& Filename() const { return filename_; }
+
+  void TypeOfBus(mdf::BusType type) { bus_type_ = type; }
+  [[nodiscard]] const mdf::BusType TypeOfBus() const { return bus_type_; }
 
   [[nodiscard]] virtual bool IsStarted() const {return started_; }
   [[nodiscard]] virtual bool IsOperable() const {return operable_; }
@@ -62,6 +69,8 @@ class ISource {
  private:
   std::string name_;
   std::string description_;
+  std::string filename_;
+  mdf::BusType bus_type_ = mdf::BusType::Can;
 };
 
 }  // namespace bus

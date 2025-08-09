@@ -54,9 +54,14 @@ class ProjectDocument : public wxDocument {
   void OnUpdateDisableEnvironment(wxUpdateUIEvent& event);
   void OnUpdateStartEnvironment(wxUpdateUIEvent& event);
   void OnUpdateStopEnvironment(wxUpdateUIEvent& event);
+
   void OnUpdateDatabaseSelected(wxUpdateUIEvent& event);
   void OnUpdateActivateDatabase(wxUpdateUIEvent& event);
   void OnUpdateDeactivateDatabase(wxUpdateUIEvent& event);
+
+  void OnUpdateSourceSelected(wxUpdateUIEvent& event);
+  void OnUpdateEnableSource(wxUpdateUIEvent& event);
+  void OnUpdateDisableSource(wxUpdateUIEvent& event);
 
   void OnEditProject(wxCommandEvent& event);
 
@@ -68,13 +73,19 @@ class ProjectDocument : public wxDocument {
   void OnStartEnvironment(wxCommandEvent& event);
   void OnStopEnvironment(wxCommandEvent& event);
 
-  void OnAddDatabase(wxCommandEvent& event);
+  void OnAddDbcDatabase(wxCommandEvent& event);
   void OnEditDatabase(wxCommandEvent& event);
   void OnDeleteDatabase(wxCommandEvent& event);
   void OnActivateDatabase(wxCommandEvent& event);
   void OnDeactivateDatabase(wxCommandEvent& event);
 
   void OnAddUnknownSource(wxCommandEvent& event);
+  void OnAddMdfSource(wxCommandEvent& event);
+  void OnEditSource(wxCommandEvent& event);
+  void OnDeleteSource(wxCommandEvent& event);
+  void OnEnableSource(wxCommandEvent& event);
+  void OnDisableSource(wxCommandEvent& event);
+
   void OnAddUnknownDestination(wxCommandEvent& event);
   wxDECLARE_DYNAMIC_CLASS(ProjectDocument);
   wxDECLARE_EVENT_TABLE();

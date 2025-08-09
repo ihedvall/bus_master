@@ -15,7 +15,7 @@ const wxArrayString kDbTypes = {
     wxString(bus::IDatabase::TypeToString(bus::TypeOfDatabase::Unknown)),
     wxString(bus::IDatabase::TypeToString(bus::TypeOfDatabase::Sqlite)),
     wxString(bus::IDatabase::TypeToString(bus::TypeOfDatabase::DbcFile)),
-    wxString(bus::IDatabase::TypeToString(bus::TypeOfDatabase::A2LFile)),
+    wxString(bus::IDatabase::TypeToString(bus::TypeOfDatabase::A2lFile)),
 };
 
 }

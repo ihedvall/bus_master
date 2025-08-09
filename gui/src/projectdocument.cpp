@@ -12,12 +12,14 @@
 #include <filesystem>
 #include <sstream>
 
+#include "bus/dbcdatabase.h"
+
 #include "busmaster.h"
 #include "environmentdialog.h"
 #include "environmenttypedialog.h"
 #include "databasedialog.h"
-#include "databasetypedialog.h"
 #include "unknownsourcedialog.h"
+#include "mdfdialog.h"
 #include "unknowndestinationdialog.h"
 #include "mainframe.h"
 #include "projectdialog.h"
@@ -59,7 +61,8 @@ wxBEGIN_EVENT_TABLE(ProjectDocument, wxDocument)
   EVT_MENU(kIdStopEnvironment, ProjectDocument::OnStopEnvironment)
 
   EVT_UPDATE_UI(kIdAddDatabase, ProjectDocument::OnUpdateProjectExist)
-  EVT_MENU(kIdAddDatabase, ProjectDocument::OnAddDatabase)
+  EVT_UPDATE_UI(kIdAddDbcDatabase, ProjectDocument::OnUpdateProjectExist)
+  EVT_MENU(kIdAddDbcDatabase, ProjectDocument::OnAddDbcDatabase)
 
   EVT_UPDATE_UI(kIdEditDatabase, ProjectDocument::OnUpdateDatabaseSelected)
   EVT_MENU(kIdEditDatabase, ProjectDocument::OnEditDatabase)
@@ -76,7 +79,17 @@ wxBEGIN_EVENT_TABLE(ProjectDocument, wxDocument)
   EVT_UPDATE_UI(kIdAddSource, ProjectDocument::OnUpdateProjectExist)
   EVT_UPDATE_UI(kIdAddUnknownSource, ProjectDocument::OnUpdateProjectExist)
   EVT_UPDATE_UI(kIdAddMdfSource, ProjectDocument::OnUpdateProjectExist)
+  EVT_UPDATE_UI(kIdEditSource, ProjectDocument::OnUpdateSourceSelected)
+  EVT_UPDATE_UI(kIdDeleteSource, ProjectDocument::OnUpdateSourceSelected)
+  EVT_UPDATE_UI(kIdEnableSource, ProjectDocument::OnUpdateEnableSource)
+  EVT_UPDATE_UI(kIdDisableSource, ProjectDocument::OnUpdateDisableSource)
+
   EVT_MENU(kIdAddUnknownSource, ProjectDocument::OnAddUnknownSource)
+  EVT_MENU(kIdAddMdfSource, ProjectDocument::OnAddMdfSource)
+  EVT_MENU(kIdEditSource, ProjectDocument::OnEditSource)
+  EVT_MENU(kIdDeleteSource, ProjectDocument::OnDeleteSource)
+  EVT_MENU(kIdEnableSource, ProjectDocument::OnEnableSource)
+  EVT_MENU(kIdDisableSource, ProjectDocument::OnDisableSource)
 
   EVT_UPDATE_UI(kIdAddDestination, ProjectDocument::OnUpdateProjectExist)
   EVT_UPDATE_UI(kIdAddUnknownDestination, ProjectDocument::OnUpdateProjectExist)
@@ -258,7 +271,7 @@ void ProjectDocument::OnUpdateDatabaseSelected(wxUpdateUIEvent& event) {
 
 void ProjectDocument::OnUpdateActivateDatabase(wxUpdateUIEvent& event) {
   if (const IDatabase* db = GetCurrentDatabase(); db != nullptr) {
-    event.Enable(!db->IsActive());
+    event.Enable(!db->IsEnabled());
   } else {
     event.Enable(false);
   }
@@ -266,7 +279,7 @@ void ProjectDocument::OnUpdateActivateDatabase(wxUpdateUIEvent& event) {
 
 void ProjectDocument::OnUpdateDeactivateDatabase(wxUpdateUIEvent& event) {
   if (const IDatabase* db = GetCurrentDatabase(); db != nullptr) {
-    event.Enable(db->IsActive());
+    event.Enable(db->IsEnabled());
   } else {
     event.Enable(false);
   }
@@ -427,19 +440,15 @@ void ProjectDocument::OnStopEnvironment(wxCommandEvent& event) {
   UpdateAllViews();
 }
 
-void ProjectDocument::OnAddDatabase(wxCommandEvent& event) {
+void ProjectDocument::OnAddDbcDatabase(wxCommandEvent& event) {
   auto* frame = GetMainFrame();
   auto* project = GetProject();
-  const auto* current_db = GetCurrentDatabase();
-
   if (project == nullptr || frame == nullptr) {
+    LOG_ERROR() << "No project or frame defined. Invalid use the function.";
     return;
   }
 
-  DatabaseTypeDialog type_dialog(frame);
-  if (type_dialog.ShowModal() != wxID_SAVE) {
-    return;
-  }
+
   std::vector<std::string> invalid_names;
   for (const auto& db : project->Databases()) {
     if (db) {
@@ -447,14 +456,9 @@ void ProjectDocument::OnAddDatabase(wxCommandEvent& event) {
     }
   }
 
-  const TypeOfDatabase type = type_dialog.GetType();
+  constexpr auto type = TypeOfDatabase::DbcFile;
   IDatabase new_db;
-  if (current_db != nullptr) {
-    new_db = *current_db;
-    new_db.Name("");
-  }
-
-  DatabaseDialog dialog(frame);
+  DatabaseDialog dialog(frame, type);
   dialog.SetDatabase(new_db);
   dialog.SetInvalidNames(invalid_names);
   if (dialog.ShowModal() != wxID_SAVE) {
@@ -464,6 +468,7 @@ void ProjectDocument::OnAddDatabase(wxCommandEvent& event) {
 
   IDatabase* db = project_->CreateDatabase(type);
   if (db == nullptr ) {
+    LOG_ERROR() << "Database create error.";
     return;
   }
   *db = new_db;
@@ -487,7 +492,7 @@ void ProjectDocument::OnEditDatabase(wxCommandEvent& event) {
     }
   }
 
-  DatabaseDialog dialog(frame);
+  DatabaseDialog dialog(frame, current_db->Type());
   dialog.SetDatabase(*current_db);
   dialog.SetInvalidNames(invalid_names);
   if (dialog.ShowModal() != wxID_SAVE) {
@@ -532,7 +537,8 @@ void ProjectDocument::OnActivateDatabase(wxCommandEvent& event) {
   if (current_db == nullptr) {
     return;
   }
-  current_db->Activate();
+  Modify(true);
+  current_db->Enable(true);
   UpdateAllViews();
 }
 
@@ -542,8 +548,33 @@ void ProjectDocument::OnDeactivateDatabase(wxCommandEvent& event) {
   if (current_db == nullptr) {
     return;
   }
-  current_db->Deactivate();
+  Modify(true);
+  current_db->Enable(false);
   UpdateAllViews();
+}
+
+void ProjectDocument::OnUpdateSourceSelected(wxUpdateUIEvent& event) {
+  if (const ISource* source = GetCurrentSource(); source != nullptr) {
+    event.Enable(true);
+  } else {
+    event.Enable(false);
+  }
+}
+
+void ProjectDocument::OnUpdateEnableSource(wxUpdateUIEvent& event) {
+  if (const ISource* source = GetCurrentSource(); source != nullptr) {
+    event.Enable(!source->IsEnabled());
+  } else {
+    event.Enable(false);
+  }
+}
+
+void ProjectDocument::OnUpdateDisableSource(wxUpdateUIEvent& event) {
+  if (const ISource* source = GetCurrentSource(); source != nullptr) {
+    event.Enable(source->IsEnabled());
+  } else {
+    event.Enable(false);
+  }
 }
 
 void ProjectDocument::OnAddUnknownSource(wxCommandEvent& event) {
@@ -577,6 +608,128 @@ void ProjectDocument::OnAddUnknownSource(wxCommandEvent& event) {
   *source = new_source;
   SetCurrentItem(ProjectItemType::Source, source->Name());
   Modify(true);
+  UpdateAllViews();
+}
+
+void ProjectDocument::OnAddMdfSource(wxCommandEvent& event) {
+  auto* frame = GetMainFrame();
+  auto* project = GetProject();
+
+  if (project == nullptr || frame == nullptr) {
+    return;
+  }
+
+  constexpr TypeOfSource type = TypeOfSource::Mdf;
+  ISource new_source;
+  std::vector<std::string> invalid_names;
+  for (const auto& source : project->Sources()) {
+    if (source) {
+      invalid_names.push_back(source->Name());
+    }
+  }
+  MdfDialog dialog(frame);
+  dialog.SetSource(new_source);
+  dialog.SetInvalidNames(invalid_names);
+  if (dialog.ShowModal() != wxID_SAVE) {
+    return;
+  }
+  dialog.GetSource(new_source);
+
+  ISource* source = project_->CreateSource(type);
+  if (source == nullptr ) {
+    return;
+  }
+  *source = new_source;
+  SetCurrentItem(ProjectItemType::Source, source->Name());
+  Modify(true);
+  UpdateAllViews();
+}
+
+void ProjectDocument::OnEditSource(wxCommandEvent& event) {
+  auto* frame = GetMainFrame();
+  auto* current_source = GetCurrentSource();
+  auto* project = GetProject();
+  if (current_source == nullptr || frame == nullptr || project == nullptr) {
+    return;
+  }
+
+  std::vector<std::string> invalid_names;
+  for (const auto& source : project->Sources()) {
+    if (source && source->Name() != current_source->Name()) {
+      invalid_names.push_back(source->Name());
+    }
+  }
+  bool modified = false;
+  switch (current_source->Type()) {
+    case TypeOfSource::Mdf: {
+      MdfDialog dialog(frame);
+      dialog.SetSource(*current_source);
+      dialog.SetInvalidNames(invalid_names);
+      if (dialog.ShowModal() != wxID_SAVE) {
+        return;
+      }
+      modified = dialog.GetSource(*current_source);
+      break;
+    }
+
+    default: {
+      UnknownSourceDialog dialog(frame);
+      dialog.SetSource(*current_source);
+      dialog.SetInvalidNames(invalid_names);
+      if (dialog.ShowModal() != wxID_SAVE) {
+        return;
+      }
+      modified = dialog.GetSource(*current_source);
+      break;
+    }
+  }
+
+  SetCurrentItem(ProjectItemType::Source, current_source->Name());
+  if (modified ) {
+    Modify(true);
+    UpdateAllViews();
+  }
+}
+
+void ProjectDocument::OnDeleteSource(wxCommandEvent& event) {
+  auto* frame = GetMainFrame();
+  auto* current_source = GetCurrentSource();
+  auto* project = GetProject();
+  if (current_source == nullptr || frame == nullptr || project == nullptr) {
+    return;
+  }
+
+  std::ostringstream msg;
+  msg << "Do you want to delete this source task?" << std::endl;
+  msg << "Source Task: " << current_source->Name();
+
+  const int result = wxMessageBox(msg.str(), "Delete Source Task",
+                            wxYES_NO | wxICON_QUESTION | wxCENTRE, frame);
+  if (result != wxYES) {
+    return;
+  }
+  project_->DeleteSource(current_source->Name());
+  SetCurrentItem(ProjectItemType::Sources, "");
+  Modify(true);
+  UpdateAllViews();
+}
+void ProjectDocument::OnEnableSource(wxCommandEvent& event) {
+  auto* current_source = GetCurrentSource();
+  if (current_source == nullptr) {
+    return;
+  }
+  Modify(true);
+  current_source->Enable(true);
+  UpdateAllViews();
+}
+
+void ProjectDocument::OnDisableSource(wxCommandEvent& event) {
+  auto* current_source = GetCurrentSource();
+  if (current_source == nullptr) {
+    return;
+  }
+  Modify(true);
+  current_source->Enable(false);
   UpdateAllViews();
 }
 
@@ -625,6 +778,7 @@ IEnvironment* ProjectDocument::GetCurrentEnvironment() const {
       case ProjectItemType::Environment:
       case ProjectItemType::Environments:
         return project_->GetEnvironment(GetCurrentId());
+
       default:
         break;
     }
@@ -633,17 +787,31 @@ IEnvironment* ProjectDocument::GetCurrentEnvironment() const {
 }
 
 IDatabase* ProjectDocument::GetCurrentDatabase() const {
-  if (!project_ || current_type_ != ProjectItemType::Database) {
-    return nullptr;
+  if (project_) {
+    switch (current_type_) {
+      case ProjectItemType::Databases:
+      case ProjectItemType::Database:
+        return project_->GetDatabase(GetCurrentId());
+
+      default:
+        break;
+    }
   }
-  return project_->GetDatabase(GetCurrentId());
+  return nullptr;
 }
 
 ISource* ProjectDocument::GetCurrentSource() const {
-  if (!project_ || current_type_ != ProjectItemType::Source) {
-    return nullptr;
+  if (project_) {
+    switch (current_type_) {
+      case ProjectItemType::Source:
+      case ProjectItemType::Sources:
+        return project_->GetSource(GetCurrentId());
+
+      default:
+        break;
+    }
   }
-  return project_->GetSource(GetCurrentId());
+  return nullptr;
 }
 
 IDestination* ProjectDocument::GetCurrentDestination() const {
@@ -652,5 +820,7 @@ IDestination* ProjectDocument::GetCurrentDestination() const {
   }
   return project_->GetDestination(GetCurrentId());
 }
+
+
 
 } // namespace bus

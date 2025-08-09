@@ -99,31 +99,41 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   menu_env->Append(kIdStopEnvironment, "Stop","Stops the environment.");
 
   // DATABASES
+  auto* menu_add_db = new wxMenu;
+  menu_add_db->Append(kIdAddDbcDatabase, "DBC Database", "Add a DBC database.");
+
   auto* menu_db = new wxMenu;
-  menu_db->Append(kIdAddDatabase, wxGetStockLabel(wxID_ADD),
+  menu_db->Append(kIdAddDatabase, wxGetStockLabel(wxID_ADD),menu_add_db,
                    "Add a database");
   menu_db->Append(kIdEditDatabase, wxGetStockLabel(wxID_EDIT),
                    "Change a database");
   menu_db->Append(kIdDeleteDatabase, wxGetStockLabel(wxID_DELETE),
                    "Delete a database");
   menu_db->AppendSeparator();
-  menu_db->Append(kIdActivateDatabase, "Activate","Activates the database. Start using the database.");
-  menu_db->Append(kIdStopEnvironment, "Deactivate","Deactivate the database. Stop using the database.");
+  menu_db->Append(kIdActivateDatabase, "Enable",
+                  "Enable the database. Start using the database.");
+  menu_db->Append(kIdStopEnvironment, "Disable",
+                  "Disable the database. Stop using the database.");
 
   // SOURCES
   auto* menu_add_source = new wxMenu;
   menu_add_source->Append(kIdAddUnknownSource, "Unknown",
                           "Add an unknown source.");
-  menu_add_source->Append(kIdAddUnknownSource, "MDF Log File",
-                          "Add an MDF log file source.");
+  menu_add_source->Append(kIdAddMdfSource, "MDF Traffic Generator",
+                          "Add an MDF traffic generator source.");
 
   auto* menu_source = new wxMenu;
   menu_source->Append(kIdAddSource, wxGetStockLabel(wxID_ADD), menu_add_source,
-                  "Add a data source");
+                  "Add a source task.");
   menu_source->Append(kIdEditSource, wxGetStockLabel(wxID_EDIT),
-                  "Change a data source");;
+                  "Change the selected source task.");;
   menu_source->Append(kIdDeleteSource, wxGetStockLabel(wxID_DELETE),
-                  "Delete a data source");
+                  "Delete the selected source task");
+  menu_source->AppendSeparator();
+  menu_source->Append(kIdEnableSource, "Enable",
+         "Enable the source task. Start using the task in the simulation.");
+  menu_source->Append(kIdDisableSource, "Disable",
+         "Disable the source task. Stop using the task in the simulation.");
 
   // DESTINATIONS
   auto* menu_add_dest = new wxMenu;
@@ -157,8 +167,8 @@ MainFrame::MainFrame(wxDocManager* doc_manager,
   menu_bar->Append(menu_project, "Project");
   menu_bar->Append(menu_env, "Environment");
   menu_bar->Append(menu_db, "Database");
-  menu_bar->Append(menu_source, "Source");
-  menu_bar->Append(menu_dest, "Destination");
+  menu_bar->Append(menu_source, "Source Task");
+  menu_bar->Append(menu_dest, "Destination Task");
   menu_bar->Append(menu_about, wxGetStockLabel(wxID_HELP));
   wxFrameBase::SetMenuBar(menu_bar);
 

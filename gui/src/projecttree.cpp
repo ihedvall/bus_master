@@ -68,9 +68,15 @@ ProjectTree::ProjectTree(wxSplitterWindow *parent)
   image_list_.Add(tree_list);
   tree_->SetImageList(&image_list_);
 
+  auto* start_button = new wxButton(this, kIdStartSimulation,
+    L"Start Simulation");
+  auto* stop_button = new wxButton(this, kIdStopSimulation,
+                                    L"Stop Simulation");
   auto* sizer = new wxBoxSizer(wxVERTICAL);
   sizer->SetMinSize(300, -1);
   sizer->Add(tree_, 1, wxALL | wxEXPAND, 0);
+  sizer->Add(start_button, 0, wxALL | wxEXPAND, 5);
+  sizer->Add(stop_button, 0, wxALL | wxEXPAND, 5);
   SetSizer(sizer);
 }
 
@@ -174,10 +180,60 @@ void ProjectTree::OnTreeSelected(wxTreeEvent& event) {
 
 void ProjectTree::OnTreeRightClick(wxTreeEvent& event) {
   OnTreeSelected(event);
-  wxMenu menu;
-  menu.Append(kIdOpenLogFile, "Open Log File");
+  auto* doc = GetDocument();
+  if (doc == nullptr) {
+    return;
+  }
+  switch( doc->GetCurrentType()) {
 
-  PopupMenu(&menu);
+    case ProjectItemType::Environment: {
+      wxMenu menu("Environment");
+      menu.Append(kIdEditEnvironment, wxGetStockLabel(wxID_EDIT),
+                  "Change the environment configuration");
+      menu.Append(kIdDeleteEnvironment, wxGetStockLabel(wxID_DELETE),
+                  "Delete the environment configuration");
+      menu.AppendSeparator();
+      menu.Append(kIdEnableEnvironment, "Enable", "Enable the environment.");
+      menu.Append(kIdDisableEnvironment, "Disable", "Disable the environment.");
+      menu.AppendSeparator();
+      menu.Append(kIdStartEnvironment, "Start", "Start the environment");
+      menu.Append(kIdStopEnvironment, "Stop", "Stop the environment");
+      PopupMenu(&menu);
+      break;
+    }
+
+    case ProjectItemType::Database: {
+      wxMenu menu("Database");
+      menu.Append(kIdEditDatabase, wxGetStockLabel(wxID_EDIT),
+                  "Change the database configuration");
+      menu.Append(kIdDeleteDatabase, wxGetStockLabel(wxID_DELETE),
+                  "Delete the database configuration");
+      menu.AppendSeparator();
+      menu.Append(kIdActivateDatabase, "Enable", "Use this database");
+      menu.Append(kIdDeactivateDatabase, "Disable",
+                  "Don't use this database");
+      PopupMenu(&menu, event.GetPoint());
+      break;
+    }
+
+    case ProjectItemType::Source: {
+      wxMenu menu("Source Task");
+      menu.Append(kIdEditSource, wxGetStockLabel(wxID_EDIT),
+                  "Change the selected task.");
+      menu.Append(kIdDeleteSource, wxGetStockLabel(wxID_DELETE),
+                  "Delete the selected task.");
+      menu.AppendSeparator();
+      menu.Append(kIdEnableSource, "Enable",
+                  "Use this task in the simulation");
+      menu.Append(kIdDisableSource, "Disable",
+                  "Don't use this task in the simulation");
+      PopupMenu(&menu, event.GetPoint());
+      break;
+    }
+
+    default:
+      break;
+  }
 }
 
 void ProjectTree::RedrawEnvironments(wxTreeItemId& root_item) {
@@ -223,7 +279,7 @@ void ProjectTree::RedrawDatabases(wxTreeItemId& root_item) {
 }
 
 void ProjectTree::RedrawSources(wxTreeItemId& root_item) {
-  wxTreeItemId source_root = tree_->AppendItem(root_item, "Sources",
+  wxTreeItemId source_root = tree_->AppendItem(root_item, "Source Tasks",
                                            TREE_EV_ROOT, TREE_EV_ROOT,
                           new ProjectItemData(ProjectItemType::Sources, "" ));
   const auto* project = GetProject();
@@ -245,7 +301,7 @@ void ProjectTree::RedrawSources(wxTreeItemId& root_item) {
 }
 
 void ProjectTree::RedrawDestinations(wxTreeItemId& root_item) {
-  wxTreeItemId dest_root = tree_->AppendItem(root_item, "Destinations",
+  wxTreeItemId dest_root = tree_->AppendItem(root_item, "Destination Tasks",
                                                TREE_CH_ROOT, TREE_CH_ROOT,
                      new ProjectItemData(ProjectItemType::Destinations, "" ));
   const auto* project = GetProject();

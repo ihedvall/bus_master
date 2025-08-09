@@ -41,7 +41,7 @@ class IDestination {
   [[nodiscard]] const std::string& Description() const { return description_; }
 
   void Enable(bool enable) { enabled_ = enable; }
-  [[nodiscard]] bool Enabled() const {return enabled_; }
+  [[nodiscard]] bool IsEnabled() const { return enabled_; }
 
   [[nodiscard]] virtual bool IsStarted() const {return started_; }
   [[nodiscard]] virtual bool IsOperable() const {return operable_; }

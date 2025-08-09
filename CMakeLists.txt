@@ -30,6 +30,9 @@ set(CMAKE_DEBUG_POSTFIX d)
 
 include(script/utillib.cmake)
 include(script/busmessage.cmake)
+include(script/metriclib.cmake)
+include(script/dbclib.cmake)
+include(script/mdflib.cmake)
 
 if (MASTER_GUI)
     include(script/boost.cmake)
@@ -62,6 +65,14 @@ add_library(bus-master-lib
         include/bus/idestination.h
         src/brokerenvironment.cpp
         include/bus/brokerenvironment.h
+        src/dbgroup.cpp
+        include/bus/dbgroup.h
+        src/dbmetric.cpp
+        include/bus/dbmetric.h
+        src/dbcdatabase.cpp
+        include/bus/dbcdatabase.h
+        src/mdftrafficgenerator.cpp
+        include/bus/mdftrafficgenerator.h
 
 )
 
@@ -70,6 +81,9 @@ target_include_directories(bus-master-lib PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${utillib_SOURCE_DIR}/include
         ${busmessage_SOURCE_DIR}/include
+        ${metriclib_SOURCE_DIR}/include
+        ${dbclib_SOURCE_DIR}/include
+        ${mdflib_SOURCE_DIR}/include
        )
 
 

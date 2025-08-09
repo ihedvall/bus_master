@@ -16,7 +16,7 @@ namespace bus {
 
 class DatabaseDialog : public wxDialog {
  public:
-  DatabaseDialog(wxWindow *parent);
+  DatabaseDialog(wxWindow *parent, TypeOfDatabase type);
   void SetInvalidNames(std::vector<std::string>& invalid_names);
   void SetDatabase(const IDatabase& database);
   bool GetDatabase(IDatabase& database);
@@ -27,8 +27,6 @@ class DatabaseDialog : public wxDialog {
   wxString name_;
   wxString description_;
   wxString filename_;
-  wxString file_filter_;
-  wxString default_extension_;
 
   wxFilePickerCtrl* file_picker_ = nullptr;
   wxTextCtrl* name_ctrl_ = nullptr;

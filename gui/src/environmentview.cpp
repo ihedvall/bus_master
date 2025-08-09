@@ -28,7 +28,8 @@ wxEND_EVENT_TABLE()
 EnvironmentView::EnvironmentView(wxSplitterWindow* parent)
     : wxPanel(parent, kIdEnvironmentPanel),
       image_list_(16,16,false,5) {
-    wxBitmap list_view("LIST_VIEW", wxBITMAP_TYPE_BMP_RESOURCE);
+
+  wxBitmap list_view("LIST_VIEW", wxBITMAP_TYPE_BMP_RESOURCE);
 
   auto* sizer = new wxBoxSizer(wxVERTICAL);
   list_ = new wxListView(this, kIdEnvironmentList,
@@ -83,6 +84,7 @@ void EnvironmentView::Redraw() {
     // ToDo: Fix Bitmap
     std::string status;
     int status_bmp = kEnvStoppedBmp;
+    const std::string_view type = IEnvironment::TypeToString(env->Type());
     if (env->IsStarted() && env->IsOperable()) {
       status = "Running";
       status_bmp = kEnvRunningBmp;
@@ -96,7 +98,7 @@ void EnvironmentView::Redraw() {
     }
     const auto index = list_->InsertItem(line, "",
                            env->IsEnabled() ? kEnvEnableBmp : kEnvDisableBmp);
-    const std::string_view type = IEnvironment::TypeToString(env->Type());
+
     list_->SetItem(index, 1, wxString::FromUTF8(env->Name()));
     list_->SetItem(index, 2, wxString::FromUTF8(type));
     list_->SetItem(index, 3, wxString::FromUTF8(status), status_bmp);

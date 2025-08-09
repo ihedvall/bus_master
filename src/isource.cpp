@@ -52,6 +52,8 @@ void ISource::WriteConfig(IXmlNode& root_node) const {
  source_node.SetProperty("Type", TypeToString(type_));
  source_node.SetProperty("Name", name_);
  source_node.SetProperty("Description", description_);
+ source_node.SetProperty("Filename", filename_);
+ source_node.SetProperty("Enabled", enabled_);
 }
 
 void ISource::ReadConfig(const IXmlNode& source_node) {
@@ -62,6 +64,8 @@ void ISource::ReadConfig(const IXmlNode& source_node) {
  // Note that the project reads the type property as its need to create the
  // right environment type.
  description_ = source_node.Property<std::string>("Description");
+ filename_ = source_node.Property<std::string>("Filename");
+ enabled_ = source_node.Property<bool>("Enabled");
 }
 
 std::string_view ISource::TypeToString(TypeOfSource type) {
@@ -91,6 +95,7 @@ void ISource::ToProperties(std::vector<BusProperty>& properties) const {
  properties.emplace_back("Source");
  properties.emplace_back("Type", std::string(TypeToString(type_)));
  properties.emplace_back("Name", Name());
+ properties.emplace_back("Filename", Filename());
  properties.emplace_back();
  properties.emplace_back("Status");
  properties.emplace_back("Enabled", enabled_ ? "Yes" : "No");
@@ -98,5 +103,7 @@ void ISource::ToProperties(std::vector<BusProperty>& properties) const {
                          (operable_ ? "Running" : "Failing") : "Stopped");
  properties.emplace_back("Operable", operable_ ? "Yes" : "No");
 }
+
+void ISource::Enable(bool enable) { enabled_ = enable; }
 
 } // bus

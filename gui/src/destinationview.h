@@ -15,9 +15,9 @@ class ProjectView;
 class ProjectDocument;
 class Project;
 
-class DatabaseView : public wxPanel {
+class DestinationView : public wxPanel {
  public:
-  explicit DatabaseView(wxSplitterWindow *parent);
+  explicit DestinationView(wxSplitterWindow* parent);
 
   void SetView(ProjectView* view) { view_ = view; }
 
@@ -37,7 +37,4 @@ class DatabaseView : public wxPanel {
   wxDECLARE_EVENT_TABLE();
 };
 
-} // bus
-
-
-
+} // end namespace bus

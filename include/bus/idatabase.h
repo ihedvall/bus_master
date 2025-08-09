@@ -8,8 +8,11 @@
 #include <string>
 #include <string_view>
 #include <memory>
+#include <vector>
 
 #include "bus/busproperty.h"
+#include "bus/dbgroup.h"
+#include "bus/dbmetric.h"
 
 namespace util::xml {
 class IXmlNode;
@@ -17,11 +20,13 @@ class IXmlNode;
 
 namespace bus {
 
+class IBusMessage;
+
 enum class TypeOfDatabase : int {
   Unknown = 0,
   Sqlite = 1,
   DbcFile = 2,
-  A2LFile = 3,
+  A2lFile = 3,
 };
 
 class IDatabase {
@@ -43,30 +48,37 @@ class IDatabase {
   void Filename(std::string filename) { filename_ = std::move(filename); }
   [[nodiscard]] const std::string& Filename() const { return filename_; }
 
-  [[nodiscard]] const std::string_view& FileFilter() const {
-    return file_filter_;
-  }
+  virtual void Enable(bool enable);
 
-  [[nodiscard]] const std::string_view& DefaultExtension() const {
-    return default_extension_;
-  }
-
-  virtual void Activate();
-  virtual void Deactivate();
-
-  [[nodiscard]] virtual bool IsActive() const {return active_; }
+  [[nodiscard]] virtual bool IsEnabled() const {return enabled_; }
   [[nodiscard]] virtual bool IsOperable() const {return operable_; }
 
   void WriteConfig(util::xml::IXmlNode& root_node) const;
-  void ReadConfig(const util::xml::IXmlNode& env_node);
+  void ReadConfig(const util::xml::IXmlNode& db_node);
 
   void ToProperties(std::vector<BusProperty>& properties) const;
+
+  virtual void ParseMessage(const IBusMessage& message);
+
+  virtual DbGroup* CreateGroup(std::string name, uint32_t identity);
+  void DeleteGroup(std::string name, uint32_t identity);
+  const std::vector<std::unique_ptr<DbGroup>>& Groups() const {
+    return group_list_;
+  }
+
+  virtual DbMetric* CreateMetric(const DbGroup& group, std::string name);
+  void DeleteMetric(const DbGroup& group, std::string name);
+  const std::vector<std::unique_ptr<DbMetric>>& Metrics() const {
+    return metric_list_;
+  }
+
  protected:
-  std::atomic<bool> active_ = false;
+  std::atomic<bool> enabled_ = false;
   std::atomic<bool> operable_ = false;
   TypeOfDatabase type_ = TypeOfDatabase::Unknown;
-  std::string_view file_filter_ = "All files (*.*)|*.*";
-  std::string_view default_extension_ = "*.*";
+
+  std::vector<std::unique_ptr<DbGroup>> group_list_;
+  std::vector<std::unique_ptr<DbMetric>> metric_list_;
  private:
   std::string name_;
   std::string description_;

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include "databasedialog.h"
+#include "mdfdialog.h"
 
 #include <wx/config.h>
 #include <wx/valnum.h>
@@ -20,15 +20,15 @@ using namespace std::filesystem;
 using namespace util::string;
 
 namespace bus {
-wxBEGIN_EVENT_TABLE(DatabaseDialog, wxDialog)
-    EVT_UPDATE_UI(wxID_SAVE, DatabaseDialog::OnUpdateSave)
-    EVT_BUTTON(wxID_SAVE, DatabaseDialog::OnSave)
-    EVT_FILEPICKER_CHANGED(kIdConfigPicker, DatabaseDialog::OnConfigPicker)
-    EVT_TEXT(kIdSave, DatabaseDialog::OnNameChange)
+wxBEGIN_EVENT_TABLE(MdfDialog, wxDialog)
+    EVT_UPDATE_UI(wxID_SAVE, MdfDialog::OnUpdateSave)
+    EVT_BUTTON(wxID_SAVE, MdfDialog::OnSave)
+    EVT_FILEPICKER_CHANGED(kIdConfigPicker, MdfDialog::OnConfigPicker)
+    EVT_TEXT(kIdSave, MdfDialog::OnNameChange)
 wxEND_EVENT_TABLE()
 
-DatabaseDialog::DatabaseDialog(wxWindow *parent, TypeOfDatabase type)
-    : wxDialog(parent,wxID_ANY,"Database Dialog") {
+MdfDialog::MdfDialog(wxWindow *parent)
+    : wxDialog(parent,wxID_ANY,"MDF Traffic Generator Dialog") {
   auto* save_button = new wxButton(this, wxID_SAVE, wxGetStockLabel(wxID_SAVE));
   auto* cancel_button = new wxButton(this, wxID_CANCEL, wxGetStockLabel(wxID_CANCEL));
 
@@ -45,32 +45,14 @@ DatabaseDialog::DatabaseDialog(wxWindow *parent, TypeOfDatabase type)
                                      wxTextValidator(wxFILTER_NONE, &description_));
   description->SetMinSize({80*8,-1});
 
-  wxString file_filter = "All Files (*.*)|*,*";
-  wxString default_extension = "*.*";
-  switch (type) {
-    case TypeOfDatabase::Sqlite:
-      file_filter = "SQLite Databases (*.sqlite)|*.sqlite|All Files (*.*)|*.*";
-      default_extension = "*.sqlite";
-      break;
+  const wxString file_filter =
+      L"MDF Bus Log Files (*.mf4)|*.mf4|All Files (*.*)|*,*";
+  const wxString default_extension = L"*.mf4";
 
-    case TypeOfDatabase::DbcFile:
-      file_filter = "DBC Files (*.dbc)|*.dbc|All Files (*.*)|*.*";
-      default_extension = "*.dbc";
-      break;
-
-    case TypeOfDatabase::A2lFile:
-      file_filter = "A2L Files (*.a2l)|*.a2l|All Files (*.*)|*.*";
-      default_extension = "*.a2l";
-      break;
-
-    default:
-      break;
-  }
-
-  file_picker_ = new wxFilePickerCtrl(this, kIdConfigPicker, wxEmptyString,
+  file_picker_ = new wxFilePickerCtrl(this, kIdConfigPicker, filename_,
                                       file_filter, default_extension,
                                       wxDefaultPosition, wxDefaultSize,
-                                      wxFLP_OPEN | wxFLP_FILE_MUST_EXIST | wxFLP_USE_TEXTCTRL | wxFLP_SMALL);
+         wxFLP_OPEN | wxFLP_FILE_MUST_EXIST | wxFLP_USE_TEXTCTRL | wxFLP_SMALL);
   file_picker_->SetMinSize({80*8,-1});
 
   // Fetch initial directory
@@ -80,7 +62,7 @@ DatabaseDialog::DatabaseDialog(wxWindow *parent, TypeOfDatabase type)
   const auto* config = wxConfig::Get();
   if (config != nullptr) {
     const wxString app_dir = config->ReadObject(
-        wxString("/DatabaseDialog/Path"), wxString("") );
+        wxString("/SourceDialog/Path"), wxString("") );
     if (!app_dir.empty()) {
       file_picker_->SetInitialDirectory(app_dir);
     }
@@ -88,7 +70,7 @@ DatabaseDialog::DatabaseDialog(wxWindow *parent, TypeOfDatabase type)
 
   auto* name_label = new wxStaticText(this, wxID_ANY, L"Name:");
   auto* description_label = new wxStaticText(this, wxID_ANY, L"Description:");
-  auto* file_label = new wxStaticText(this, wxID_ANY, L"Database File:");
+  auto* file_label = new wxStaticText(this, wxID_ANY, L"MDF Log File:");
 
   int label_width = 100;
   label_width = std::max(label_width,name_label->GetBestSize().GetX());
@@ -127,37 +109,40 @@ DatabaseDialog::DatabaseDialog(wxWindow *parent, TypeOfDatabase type)
   cancel_button->SetDefault();
 
 }
-void DatabaseDialog::SetInvalidNames(
-    std::vector<std::string>& invalid_names) {
+
+void MdfDialog::SetInvalidNames( std::vector<std::string>& invalid_names) {
   invalid_names = std::move(invalid_names);
 }
 
-void DatabaseDialog::SetDatabase( const IDatabase& database) {
-  name_ = database.Name();
-  description_ = database.Description();
-  filename_ = database.Filename();
+void MdfDialog::SetSource( const ISource& source) {
+  name_ = source.Name();
+  description_ = source.Description();
+  filename_ = source.Filename();
   TransferDataToWindow();
 }
 
-bool DatabaseDialog::GetDatabase(IDatabase& database) {
+bool MdfDialog::GetSource(ISource& source) {
   TransferDataFromWindow();
   bool modified = false;
-  if (database.Name() != name_.ToStdString()) {
-    database.Name(name_.ToStdString());
+  if (source.Name() != name_.ToStdString()) {
+    source.Name(name_.ToStdString());
     modified = true;
   }
-  if (database.Description() != description_.ToStdString()) {
-    database.Description(description_.ToStdString());
+
+  if (source.Description() != description_.ToStdString()) {
+    source.Description(description_.ToStdString());
     modified = true;
   }
-  if (database.Filename() != filename_.ToStdString()) {
-    database.Filename(filename_.ToStdString());
+
+  if (source.Filename() != filename_.ToStdString()) {
+    source.Filename(filename_.ToStdString());
     modified = true;
   }
+
   return modified;
 }
 
-void DatabaseDialog::OnSave(wxCommandEvent &event) {
+void MdfDialog::OnSave(wxCommandEvent &event) {
   if (!Validate() || !TransferDataFromWindow()) {
     return;
   }
@@ -170,6 +155,7 @@ void DatabaseDialog::OnSave(wxCommandEvent &event) {
                  this);
     return;
   }
+
   if (IsModal()) {
     EndModal(wxID_SAVE);
   } else {
@@ -178,34 +164,34 @@ void DatabaseDialog::OnSave(wxCommandEvent &event) {
   }
 }
 
-void DatabaseDialog::OnUpdateSave(wxUpdateUIEvent &event) {
+void MdfDialog::OnUpdateSave(wxUpdateUIEvent &event) {
   event.Enable(!name_.IsEmpty());
 }
 
-void DatabaseDialog::OnConfigPicker(wxFileDirPickerEvent& event) {
+void MdfDialog::OnConfigPicker(wxFileDirPickerEvent& event) {
   const wxString file = event.GetPath();
   try {
     std::filesystem::path full_name(file.ToStdWstring());
     if (auto* config = wxConfig::Get();
         config != nullptr) {
-      config->Write("/DatabaseDialog/Path",
+      config->Write("/SourceDialog/Path",
                     wxString(full_name.parent_path().wstring()));
     }
   } catch (const std::exception&) {
   }
 }
 
-void DatabaseDialog::OnNameChange(wxCommandEvent&) {
+void MdfDialog::OnNameChange(wxCommandEvent&) {
   name_ctrl_->TransferDataFromWindow();
 }
 
-bool DatabaseDialog::TransferDataToWindow() {
+bool MdfDialog::TransferDataToWindow() {
   std::wostringstream app_arg;
   file_picker_->SetPath(filename_);
   return wxWindowBase::TransferDataToWindow();
 }
 
-bool DatabaseDialog::TransferDataFromWindow() {  // Fix the exe_picker and combo boxes
+bool MdfDialog::TransferDataFromWindow() {  // Fix the exe_picker and combo boxes
   filename_ = file_picker_->GetPath();
   auto ret = wxWindowBase::TransferDataFromWindow();
   name_.Trim(true).Trim(false);
@@ -214,13 +200,13 @@ bool DatabaseDialog::TransferDataFromWindow() {  // Fix the exe_picker and combo
   return ret;
 }
 
-bool DatabaseDialog::IsValidName() const {
+bool MdfDialog::IsValidName() const {
   const std::string ref_name = name_.ToStdString();
   const bool valid = std::ranges::none_of( invalid_names_,
-                                          [&] (const std::string& name) -> bool {
-                                            return IEquals(name, ref_name);
-                                          });
+                                  [&] (const std::string& name) -> bool {
+                                       return IEquals(name, ref_name);
+                                  });
   return valid;
 }
 
-} // bus
+} // namespace bus

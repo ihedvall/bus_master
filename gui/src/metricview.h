@@ -13,31 +13,33 @@
 namespace bus {
 class ProjectView;
 class ProjectDocument;
-class Project;
+class IDatabase;
 
-class DatabaseView : public wxPanel {
+class MetricView : public wxPanel {
  public:
-  explicit DatabaseView(wxSplitterWindow *parent);
+  explicit MetricView(wxSplitterWindow* parent);
 
   void SetView(ProjectView* view) { view_ = view; }
 
   [[nodiscard]] ProjectDocument* GetDocument() const;
-  [[nodiscard]] Project* GetProject() const;
+  [[nodiscard]] IDatabase* GetDatabase() const;
   void Update() override;
 
  private:
   ProjectView* view_ = nullptr;
   wxListView* list_ = nullptr;
-  wxImageList image_list_;
+  wxStaticText* header_ctrl_ = nullptr;
+  wxTextCtrl* filter_name_ctrl_ = nullptr;
+  wxTextCtrl* filter_group_ctrl_ = nullptr;
+  //wxImageList image_list_;
 
   void Redraw();
+
+  wxString MakeHeaderText();
 
   void OnRightClick(wxListEvent& event);
   void OnItemSelected(wxListEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 
-} // bus
-
-
-
+} // end namespace bus

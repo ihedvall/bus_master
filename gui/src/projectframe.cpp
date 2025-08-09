@@ -20,6 +20,10 @@
 #include "projectview.h"
 #include "propertyview.h"
 #include "loglistview.h"
+#include "metricview.h"
+#include "messagelistview.h"
+#include "sourceview.h"
+#include "destinationview.h"
 #include "windowid.h"
 
 namespace bus {
@@ -47,8 +51,20 @@ ProjectFrame::ProjectFrame(wxDocParentFrame *parent)
   database_view_ = new DatabaseView(splitter_);
   database_view_->Hide();
 
+  source_view_ = new SourceView(splitter_);
+  source_view_->Hide();
+
+  destination_view_ = new DestinationView(splitter_);
+  destination_view_->Hide();
+
+  metric_view_ = new MetricView(splitter_);
+  metric_view_->Hide();
+
+  message_view_ = new MessageListView(splitter_);
+  message_view_->Hide();
+
   splitter_->SetSashGravity(0.0);
-  splitter_->SplitVertically(project_panel_, property_view_ , 300);
+  splitter_->SplitVertically(project_panel_, property_view_ , 200);
 
   auto* main_sizer = new wxBoxSizer(wxVERTICAL);
   main_sizer->Add(splitter_, 1, wxEXPAND | wxLEFT | wxBOTTOM, 0);
@@ -94,9 +110,36 @@ void ProjectFrame::RedrawRight() {
       new_view = database_view_ ;
       break;
 
+    case ProjectItemType::Database:
+      if (const auto* database = doc->GetCurrentDatabase();
+          database != nullptr && database->IsEnabled() ) {
+        new_view = metric_view_;
+      }
+      break;
+
+    case ProjectItemType::Sources:
+      new_view = source_view_ ;
+      break;
+
+    case ProjectItemType::Source:
+      if (ISource* source = doc->GetCurrentSource();
+          source != nullptr && source->IsEnabled() ) {
+        if (auto* traffic_generator = dynamic_cast<MdfTrafficGenerator*>(source);
+            traffic_generator != nullptr && message_view_ != nullptr) {
+          message_view_->SetSource(traffic_generator);
+          new_view = message_view_;
+        }
+      }
+      break;
+
+    case ProjectItemType::Destinations:
+      new_view = destination_view_ ;
+      break;
+
     default:
       break;
   }
+
   wxWindow* current_view = splitter_->GetWindow2();
   if (current_view == nullptr || new_view == nullptr) {
     return;
@@ -126,6 +169,15 @@ void ProjectFrame::SetView(ProjectView *view) {
   }
   if (database_view_ != nullptr) {
     database_view_->SetView(view);
+  }
+  if (metric_view_ != nullptr) {
+    metric_view_->SetView(view);
+  }
+  if (source_view_ != nullptr) {
+    source_view_->SetView(view);
+  }
+  if (destination_view_ != nullptr) {
+    destination_view_->SetView(view);
   }
 }
 

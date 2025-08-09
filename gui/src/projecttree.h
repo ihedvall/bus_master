@@ -28,6 +28,7 @@ class ProjectTree : public wxPanel {
  private:
   ProjectView* view_ = nullptr;
   wxTreeCtrl* tree_ = nullptr;
+
   wxImageList image_list_;
 
   wxTreeItemId FindCurrent(wxTreeItemId root_item);

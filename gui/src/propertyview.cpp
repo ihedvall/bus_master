@@ -161,16 +161,31 @@ void PropertyView::OnRightClick(wxListEvent& event) {
       if (const IDatabase* db = project->GetDatabase(doc->GetCurrentId());
           db != nullptr ) {
         wxMenu menu("Database");
-        menu.Append(kIdAddDatabase, wxGetStockLabel(wxID_ADD),
-                    "Add a new database");
         menu.Append(kIdEditDatabase, wxGetStockLabel(wxID_EDIT),
                     "Change the database configuration");
         menu.Append(kIdDeleteDatabase, wxGetStockLabel(wxID_DELETE),
                     "Delete the database configuration");
         menu.AppendSeparator();
-        menu.Append(kIdActivateDatabase, "Activate", "Use this database");
-        menu.Append(kIdDeactivateDatabase, "Deactivate",
+        menu.Append(kIdActivateDatabase, "Enable", "Use this database");
+        menu.Append(kIdDeactivateDatabase, "Disable",
                     "Don't use this database");
+        PopupMenu(&menu, event.GetPoint());
+      }
+      break;
+
+    case ProjectItemType::Source:
+      if (const ISource* source = project->GetSource(doc->GetCurrentId());
+          source != nullptr ) {
+        wxMenu menu("Source Task");
+        menu.Append(kIdEditSource, wxGetStockLabel(wxID_EDIT),
+                    "Change the selected task.");
+        menu.Append(kIdDeleteSource, wxGetStockLabel(wxID_DELETE),
+                    "Delete the selected task.");
+        menu.AppendSeparator();
+        menu.Append(kIdEnableSource, "Enable",
+                    "Use this task in the simulation");
+        menu.Append(kIdDisableSource, "Disable",
+                    "Don't use this task in the simulation");
         PopupMenu(&menu, event.GetPoint());
       }
       break;
